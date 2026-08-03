@@ -1,14 +1,49 @@
-<canvas id="c" width="240" height="400"></canvas>
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cosmic Tetris</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#050713;color:#eaf6ff;font:16px/1.3 system-ui,sans-serif;overflow:hidden}
+body:before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 18% 24%,#3d1e8a55,transparent 25%),radial-gradient(circle at 82% 12%,#00e5ff33,transparent 22%),radial-gradient(circle at 55% 84%,#ff2fb233,transparent 24%),#050713}
+body:after{content:"";position:fixed;inset:0;background-image:radial-gradient(#fff 1px,transparent 1px);background-size:37px 37px;opacity:.22;animation:stars 18s linear infinite}@keyframes stars{to{transform:translateY(37px)}}
+.app{position:relative;z-index:1;display:flex;gap:18px;align-items:flex-start;padding:18px;border:1px solid #6ee7ff55;background:#081020cc;box-shadow:0 0 45px #00d9ff33;border-radius:12px}
+canvas{display:block;background:#070b19;border:2px solid #7df9ff;box-shadow:0 0 22px #00e5ff66}
+.side{width:150px}.brand{font-weight:900;font-size:24px;color:#7df9ff;text-shadow:0 0 12px #00e5ff;margin-bottom:14px}
+.box{border:1px solid #ffffff24;background:#ffffff0b;padding:12px;margin-bottom:12px;border-radius:8px}.label{color:#92a4c7;font-size:12px;text-transform:uppercase;letter-spacing:.08em}.num{font-size:26px;font-weight:800}
+#next{width:96px;height:96px;margin-top:8px}.keys{font-size:13px;color:#c9d7ff}.over{position:absolute;inset:18px;display:none;place-items:center;text-align:center;background:#030613cc}.over b{font-size:32px;color:#ff5edb;text-shadow:0 0 14px #ff2fb2}
+button{width:100%;padding:10px;border:0;border-radius:8px;background:#7df9ff;color:#05101e;font-weight:800;cursor:pointer}button:hover{filter:brightness(1.1)}
+</style>
+<div class="app">
+  <canvas id="game" width="300" height="600"></canvas>
+  <div class="side">
+    <div class="brand">COSMIC<br>TETRIS</div>
+    <div class="box"><div class="label">Очки</div><div id="score" class="num">0</div></div>
+    <div class="box"><div class="label">Линии</div><div id="lines" class="num">0</div></div>
+    <div class="box"><div class="label">Уровень</div><div id="level" class="num">1</div></div>
+    <div class="box"><div class="label">Следующая</div><canvas id="next"></canvas></div>
+    <div class="box keys">← → двигать<br>↑ повернуть<br>↓ быстрее<br>Space бросить<br>P пауза</div>
+    <button onclick="restart()">Заново</button>
+  </div>
+  <div id="over" class="over"><div><b>GAME OVER</b><p>Нажми Enter</p></div></div>
+</div>
 <script>
-const C=c.getContext("2d"),W=12,H=20,S=20;
-let A=[...Array(H)].map(_=>Array(W).fill(0)),P,score=0;
-const T=[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]],[[1,1,0],[0,1,1]],[[0,1,1],[1,1,0]]];
-function piece(){P={x:4,y:0,m:T[Math.random()*7|0].map(r=>[...r]),v:1+Math.random()*6|0};if(hit())A=[...Array(H)].map(_=>Array(W).fill(0)),score=0}
-function hit(dx=0,dy=0,m=P.m){return m.some((r,y)=>r.some((v,x)=>v&&(A[y+P.y+dy]?.[x+P.x+dx]??1)))}
-function rot(){let m=P.m[0].map((_,i)=>P.m.map(r=>r[i]).reverse());if(!hit(0,0,m))P.m=m}
-function put(){P.m.map((r,y)=>r.map((v,x)=>v&&(A[y+P.y][x+P.x]=P.v)));A=A.filter(r=>r.some(v=>!v));score+=H-A.length;while(A.length<H)A.unshift(Array(W).fill(0));piece()}
-function step(){hit(0,1)?put():P.y++}
-function draw(){C.fillStyle="#111";C.fillRect(0,0,240,400);[A,P].map(o=>(o.m||o).map((r,y)=>r.map((v,x)=>{if(v){C.fillStyle=`hsl(${v*55},80%,55%)`;C.fillRect(((o.x||0)+x)*S,((o.y||0)+y)*S,S-1,S-1)}})));C.fillStyle="#fff";C.fillText(score,8,16)}
-document.onkeydown=e=>({ArrowLeft(){!hit(-1,0)&&P.x--},ArrowRight(){!hit(1,0)&&P.x++},ArrowDown:step,ArrowUp:rot," "(){while(!hit(0,1))P.y++;put()}}[e.key]?.(),draw());
-piece();setInterval(()=>step()+draw(),500);draw();
+const g=game.getContext("2d"),n=next.getContext("2d"),W=10,H=20,S=30,colors=["","#00e5ff","#ffe66d","#ff5edb","#7cff6b","#ff8d4d","#a78bfa","#4dd8ff"];
+const shapes=[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]],[[1,1,0],[0,1,1]],[[0,1,1],[1,1,0]]];
+let board,cur,nxt,score,lines,level,paused,lost,last,anim;
+const clone=a=>a.map(r=>[...r]),rnd=()=>{let id=Math.random()*7|0;return{x:3,y:0,m:clone(shapes[id]),c:id+1}};
+function restart(){cancelAnimationFrame(anim);board=Array.from({length:H},()=>Array(W).fill(0));score=lines=0;level=1;paused=lost=false;nxt=rnd();spawn();over.style.display="none";last=0;anim=requestAnimationFrame(loop)}
+function spawn(){cur=nxt;nxt=rnd();cur.x=3;cur.y=0;if(hit())lost=true}
+function hit(dx=0,dy=0,m=cur.m){return m.some((r,y)=>r.some((v,x)=>v&&(board[cur.y+y+dy]?.[cur.x+x+dx]??1)))}
+function rotate(){let m=cur.m[0].map((_,i)=>cur.m.map(r=>r[i]).reverse());if(!hit(0,0,m))cur.m=m}
+function lock(){cur.m.forEach((r,y)=>r.forEach((v,x)=>v&&(board[cur.y+y][cur.x+x]=cur.c)));board=board.filter(r=>r.some(v=>!v));let cleared=H-board.length;while(board.length<H)board.unshift(Array(W).fill(0));if(cleared){lines+=cleared;score+=[0,100,300,500,800][cleared]*level;level=1+(lines/10|0)}spawn()}
+function drop(){hit(0,1)?lock():cur.y++}
+function hard(){while(!hit(0,1)){cur.y++;score+=2}lock()}
+function block(ctx,x,y,c,s=S){ctx.fillStyle=colors[c];ctx.shadowColor=colors[c];ctx.shadowBlur=12;ctx.fillRect(x*s+2,y*s+2,s-4,s-4);ctx.shadowBlur=0;ctx.strokeStyle="#ffffff66";ctx.strokeRect(x*s+3,y*s+3,s-6,s-6)}
+function drawGrid(){g.clearRect(0,0,300,600);g.strokeStyle="#24304f";for(let x=0;x<W;x++)for(let y=0;y<H;y++)g.strokeRect(x*S,y*S,S,S)}
+function draw(){drawGrid();board.forEach((r,y)=>r.forEach((v,x)=>v&&block(g,x,y,v)));cur.m.forEach((r,y)=>r.forEach((v,x)=>v&&block(g,cur.x+x,cur.y+y,cur.c)));document.getElementById("score").textContent=score;document.getElementById("lines").textContent=lines;document.getElementById("level").textContent=level;n.clearRect(0,0,96,96);nxt.m.forEach((r,y)=>r.forEach((v,x)=>v&&block(n,x+1,y+1,nxt.c,22)));if(paused){g.fillStyle="#0009";g.fillRect(0,0,300,600);g.fillStyle="#fff";g.font="32px system-ui";g.fillText("PAUSE",92,300)}}
+function loop(t){if(lost){over.style.display="grid";draw();return}if(!paused&&t-last>Math.max(100,650-level*45)){drop();last=t}draw();anim=requestAnimationFrame(loop)}
+onkeydown=e=>{if(e.key==="Enter"&&lost)return restart();if(e.key.toLowerCase()==="p")paused=!paused;if(paused||lost)return;({ArrowLeft(){!hit(-1,0)&&(cur.x--)},ArrowRight(){!hit(1,0)&&(cur.x++)},ArrowDown(){drop();score++},ArrowUp:rotate," ":hard}[e.key]||(()=>{}))();draw()};
+restart();
 </script>
+</html>

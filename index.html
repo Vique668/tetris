@@ -1,0 +1,14 @@
+<canvas id="c" width="240" height="400"></canvas>
+<script>
+const C=c.getContext("2d"),W=12,H=20,S=20;
+let A=[...Array(H)].map(_=>Array(W).fill(0)),P,score=0;
+const T=[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]],[[1,1,0],[0,1,1]],[[0,1,1],[1,1,0]]];
+function piece(){P={x:4,y:0,m:T[Math.random()*7|0].map(r=>[...r]),v:1+Math.random()*6|0};if(hit())A=[...Array(H)].map(_=>Array(W).fill(0)),score=0}
+function hit(dx=0,dy=0,m=P.m){return m.some((r,y)=>r.some((v,x)=>v&&(A[y+P.y+dy]?.[x+P.x+dx]??1)))}
+function rot(){let m=P.m[0].map((_,i)=>P.m.map(r=>r[i]).reverse());if(!hit(0,0,m))P.m=m}
+function put(){P.m.map((r,y)=>r.map((v,x)=>v&&(A[y+P.y][x+P.x]=P.v)));A=A.filter(r=>r.some(v=>!v));score+=H-A.length;while(A.length<H)A.unshift(Array(W).fill(0));piece()}
+function step(){hit(0,1)?put():P.y++}
+function draw(){C.fillStyle="#111";C.fillRect(0,0,240,400);[A,P].map(o=>(o.m||o).map((r,y)=>r.map((v,x)=>{if(v){C.fillStyle=`hsl(${v*55},80%,55%)`;C.fillRect(((o.x||0)+x)*S,((o.y||0)+y)*S,S-1,S-1)}})));C.fillStyle="#fff";C.fillText(score,8,16)}
+document.onkeydown=e=>({ArrowLeft(){!hit(-1,0)&&P.x--},ArrowRight(){!hit(1,0)&&P.x++},ArrowDown:step,ArrowUp:rot," "(){while(!hit(0,1))P.y++;put()}}[e.key]?.(),draw());
+piece();setInterval(()=>step()+draw(),500);draw();
+</script>

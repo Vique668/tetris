@@ -12,27 +12,30 @@ canvas{display:block;background:#070b19;border:2px solid #7df9ff;box-shadow:0 0 
 .side{width:150px}.brand{font-weight:900;font-size:24px;color:#7df9ff;text-shadow:0 0 12px #00e5ff;margin-bottom:14px}
 .box{border:1px solid #ffffff24;background:#ffffff0b;padding:12px;margin-bottom:12px;border-radius:8px}.label{color:#92a4c7;font-size:12px;text-transform:uppercase;letter-spacing:.08em}.num{font-size:26px;font-weight:800}
 #next{width:96px;height:96px;margin-top:8px}.keys{font-size:13px;color:#c9d7ff}.over{position:absolute;inset:18px;display:none;place-items:center;text-align:center;background:#030613cc}.over b{font-size:32px;color:#ff5edb;text-shadow:0 0 14px #ff2fb2}
-button{width:100%;padding:10px;border:0;border-radius:8px;background:#7df9ff;color:#05101e;font-weight:800;cursor:pointer}button:hover{filter:brightness(1.1)}
+button{width:100%;padding:10px;margin-bottom:8px;border:0;border-radius:8px;background:#7df9ff;color:#05101e;font-weight:800;cursor:pointer}button:hover{filter:brightness(1.1)}
 </style>
 <div class="app">
   <canvas id="game" width="300" height="600"></canvas>
   <div class="side">
     <div class="brand">COSMIC<br>TETRIS</div>
-    <div class="box"><div class="label">Очки</div><div id="score" class="num">0</div></div>
-    <div class="box"><div class="label">Линии</div><div id="lines" class="num">0</div></div>
-    <div class="box"><div class="label">Уровень</div><div id="level" class="num">1</div></div>
-    <div class="box"><div class="label">Следующая</div><canvas id="next"></canvas></div>
-    <div class="box keys">← → двигать<br>↑ повернуть<br>↓ быстрее<br>Space бросить<br>P пауза</div>
-    <button onclick="restart()">Заново</button>
+    <div class="box"><div class="label">&#1054;&#1095;&#1082;&#1080;</div><div id="score" class="num">0</div></div>
+    <div class="box"><div class="label">&#1051;&#1080;&#1085;&#1080;&#1080;</div><div id="lines" class="num">0</div></div>
+    <div class="box"><div class="label">&#1059;&#1088;&#1086;&#1074;&#1077;&#1085;&#1100;</div><div id="level" class="num">1</div></div>
+    <div class="box"><div class="label">&#1057;&#1083;&#1077;&#1076;&#1091;&#1102;&#1097;&#1072;&#1103;</div><canvas id="next" width="96" height="96"></canvas></div>
+    <div class="box keys">&larr; &rarr; &#1076;&#1074;&#1080;&#1075;&#1072;&#1090;&#1100;<br>&uarr; &#1087;&#1086;&#1074;&#1077;&#1088;&#1085;&#1091;&#1090;&#1100;<br>&darr; &#1073;&#1099;&#1089;&#1090;&#1088;&#1077;&#1077;<br>Space &#1073;&#1088;&#1086;&#1089;&#1080;&#1090;&#1100;<br>P &#1087;&#1072;&#1091;&#1079;&#1072;</div>
+    <button onclick="togglePause()">&#1055;&#1072;&#1091;&#1079;&#1072;</button>
+    <button onclick="restart()">&#1047;&#1072;&#1085;&#1086;&#1074;&#1086;</button>
   </div>
-  <div id="over" class="over"><div><b>GAME OVER</b><p>Нажми Enter</p></div></div>
+  <div id="over" class="over"><div><b>GAME OVER</b><p>&#1053;&#1072;&#1078;&#1084;&#1080; Enter</p></div></div>
 </div>
 <script>
 const g=game.getContext("2d"),n=next.getContext("2d"),W=10,H=20,S=30,colors=["","#00e5ff","#ffe66d","#ff5edb","#7cff6b","#ff8d4d","#a78bfa","#4dd8ff"];
+const scoreEl=document.getElementById("score"),linesEl=document.getElementById("lines"),levelEl=document.getElementById("level");
 const shapes=[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]],[[1,1,0],[0,1,1]],[[0,1,1],[1,1,0]]];
 let board,cur,nxt,score,lines,level,paused,lost,last,anim;
 const clone=a=>a.map(r=>[...r]),rnd=()=>{let id=Math.random()*7|0;return{x:3,y:0,m:clone(shapes[id]),c:id+1}};
 function restart(){cancelAnimationFrame(anim);board=Array.from({length:H},()=>Array(W).fill(0));score=lines=0;level=1;paused=lost=false;nxt=rnd();spawn();over.style.display="none";last=0;anim=requestAnimationFrame(loop)}
+function togglePause(){if(!lost)paused=!paused}
 function spawn(){cur=nxt;nxt=rnd();cur.x=3;cur.y=0;if(hit())lost=true}
 function hit(dx=0,dy=0,m=cur.m){return m.some((r,y)=>r.some((v,x)=>v&&(board[cur.y+y+dy]?.[cur.x+x+dx]??1)))}
 function rotate(){let m=cur.m[0].map((_,i)=>cur.m.map(r=>r[i]).reverse());if(!hit(0,0,m))cur.m=m}
@@ -41,9 +44,9 @@ function drop(){hit(0,1)?lock():cur.y++}
 function hard(){while(!hit(0,1)){cur.y++;score+=2}lock()}
 function block(ctx,x,y,c,s=S){ctx.fillStyle=colors[c];ctx.shadowColor=colors[c];ctx.shadowBlur=12;ctx.fillRect(x*s+2,y*s+2,s-4,s-4);ctx.shadowBlur=0;ctx.strokeStyle="#ffffff66";ctx.strokeRect(x*s+3,y*s+3,s-6,s-6)}
 function drawGrid(){g.clearRect(0,0,300,600);g.strokeStyle="#24304f";for(let x=0;x<W;x++)for(let y=0;y<H;y++)g.strokeRect(x*S,y*S,S,S)}
-function draw(){drawGrid();board.forEach((r,y)=>r.forEach((v,x)=>v&&block(g,x,y,v)));cur.m.forEach((r,y)=>r.forEach((v,x)=>v&&block(g,cur.x+x,cur.y+y,cur.c)));document.getElementById("score").textContent=score;document.getElementById("lines").textContent=lines;document.getElementById("level").textContent=level;n.clearRect(0,0,96,96);nxt.m.forEach((r,y)=>r.forEach((v,x)=>v&&block(n,x+1,y+1,nxt.c,22)));if(paused){g.fillStyle="#0009";g.fillRect(0,0,300,600);g.fillStyle="#fff";g.font="32px system-ui";g.fillText("PAUSE",92,300)}}
+function draw(){drawGrid();board.forEach((r,y)=>r.forEach((v,x)=>v&&block(g,x,y,v)));cur.m.forEach((r,y)=>r.forEach((v,x)=>v&&block(g,cur.x+x,cur.y+y,cur.c)));scoreEl.textContent=score;linesEl.textContent=lines;levelEl.textContent=level;n.clearRect(0,0,96,96);nxt.m.forEach((r,y)=>r.forEach((v,x)=>v&&block(n,x+1,y+1,nxt.c,22)));if(paused){g.fillStyle="#0009";g.fillRect(0,0,300,600);g.fillStyle="#fff";g.font="32px system-ui";g.fillText("PAUSE",92,300)}}
 function loop(t){if(lost){over.style.display="grid";draw();return}if(!paused&&t-last>Math.max(100,650-level*45)){drop();last=t}draw();anim=requestAnimationFrame(loop)}
-onkeydown=e=>{if(e.key==="Enter"&&lost)return restart();if(e.key.toLowerCase()==="p")paused=!paused;if(paused||lost)return;({ArrowLeft(){!hit(-1,0)&&(cur.x--)},ArrowRight(){!hit(1,0)&&(cur.x++)},ArrowDown(){drop();score++},ArrowUp:rotate," ":hard}[e.key]||(()=>{}))();draw()};
+onkeydown=e=>{if(e.key==="Enter"&&lost)return restart();if(e.key.toLowerCase()==="p")togglePause();if(paused||lost)return;({ArrowLeft(){!hit(-1,0)&&(cur.x--)},ArrowRight(){!hit(1,0)&&(cur.x++)},ArrowDown(){drop();score++},ArrowUp:rotate," ":hard}[e.key]||(()=>{}))();draw()};
 restart();
 </script>
 </html>
